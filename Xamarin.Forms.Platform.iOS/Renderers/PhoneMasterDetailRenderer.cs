@@ -24,6 +24,7 @@ namespace Xamarin.Forms.Platform.iOS
 		UIGestureRecognizer _tapGesture;
 
 		VisualElementTracker _tracker;
+		bool _applyShadow;
 
 		Page Page => Element as Page;
 
@@ -235,6 +236,8 @@ namespace Xamarin.Forms.Platform.iOS
 				UpdateBackground();
 			else if (e.PropertyName == Page.BackgroundImageSourceProperty.PropertyName)
 				UpdateBackground();
+			else if (e.PropertyName == PlatformConfiguration.iOSSpecific.MasterDetailPage.ApplyShadowProperty.PropertyName)
+				UpdateApplyShadow(((MasterDetailPage)Element).OnThisPlatform().GetApplyShadow());
 		}
 
 		void LayoutChildren(bool animated)
@@ -257,7 +260,8 @@ namespace Xamarin.Forms.Platform.iOS
 			if (Presented)
 			{
 				target.X += masterFrame.Width;
-				opacity = 0.5f;
+				if (_applyShadow)
+					opacity = 0.5f;
 			}
 
 			if (isRTL)
@@ -367,6 +371,11 @@ namespace Xamarin.Forms.Platform.iOS
 				NavigationRenderer.SetMasterLeftBarButton(firstPage, masterDetailPage);
 		}
 
+		void UpdateApplyShadow(bool value)
+		{
+			_applyShadow = value;
+		}
+
 		public override UIViewController ChildViewControllerForStatusBarHidden()
 		{
 			if (((MasterDetailPage)Element).Detail != null)
@@ -429,8 +438,11 @@ namespace Xamarin.Forms.Platform.iOS
 							targetFrame.X = (nfloat)Math.Min(_masterController.View.Frame.Width, Math.Max(0, motion));
 
 						targetFrame.X = targetFrame.X * directionModifier;
-						var openProgress = targetFrame.X / _masterController.View.Frame.Width;
-						ApplyDetailShadow((nfloat)openProgress);
+						if (_applyShadow)
+						{
+							var openProgress = targetFrame.X / _masterController.View.Frame.Width;
+							ApplyDetailShadow((nfloat)openProgress);
+						}
 
 						detailView.Frame = targetFrame;
 						break;
